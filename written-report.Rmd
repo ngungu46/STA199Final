@@ -1,0 +1,1642 @@
+---
+title: "Analyzing the relationship between student alcohol consumption and school performance"
+author: "Fat GoldFish: Daniel Bolja, Damla Ozdemir, Elyse McFalls, Nathan Nguyen"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE)
+```
+
+# I. Introduction
+
+There has been a recent study that looked at changes in the drinking habits of Americans, which finds that “Americans Are Drinking 14% More Often During Pandemic”, and “Instances of heavy drinking among women, which for women was defined as four or more drinks within a couple of hours, spiked by 41%”. Although these studies did not look at younger adults, we found this conclusion interesting, so we want to analyze data having something to do with alcohol consumption in a younger population. We want to investigate the relationship between alcohol consumption in younger age groups and its effects on academic performance. We referenced a study using various types of data to try and predict secondary school performance of Portuguese students, with weekend and workday alcohol consumption being two important variables to consider. We want to determine if alcohol consumption is a significant predictor of academic success, especially in grades, Weekend study time, absences, and the number of failed classes.
+
+ We are using the data from the study of Cortez and Silva (2008), which focused on the study performance of secondary students based on their alcohol consumption. The data contains 649 observations which are secondary students enrolled in Portuguese languages from two public schools in the Alenjeto region of Portugal during the 2005 - 2006 school year. Since at this time, the majority of Portuguese public schools’ information systems remained very poor, the authors built the database from two sources: paper-based school reports with few attributes from grades and number of absences, and questionnaires about several demographic, social/emotional, and school-related variables that were expected to affect student performance. Data with a lack of identification details were discarded. There are a total of 33 variables, where our main focus will be Workday (`Dalc`) and Weekend (`Walc`) alcohol consumption, first, second, and third-period grades (`G1`, `G2`, `G3`), Weekend study time (`studytime`), absences (`absences`) and the number of failed classes (`failure`). 
+ 
+```{r eval = F}
+Variables | Meaning
+---- | -----------------------------
+`Dalc` | workday alcohol consumption
+`Walc` | weekend alcohol consumption 
+`studytime` | weekly study time (numeric: 1 – < 2 hours, 2 – 2 to 5 hours, 3 – 5 to 10 hours or 4 – > 10 hours)
+`failures` | number of past class failures ($n$ if $0\leq n<3$, else $4$)
+`absences` | number of school absences (from $0$ to $93$)
+`G1` | first period grade
+`G2` | second period grade
+`G3` | final grade
+```
+ 
+Variables | Meaning
+---- | -----------------------------
+`Dalc` | workday alcohol consumption (from 1 to 5)
+`Walc` | weekend alcohol consumption (from 1 to 5)
+`studytime` | weekly study time (numeric: 1 – < 2 hours, 2 – 2 to 5 hours, 3 – 5 to 10 hours or 4 – > 10 hours)
+`failures` | number of past class failures ($n$ if $0\leq n<3$, else $4$)
+`absences` | number of school absences (from $0$ to $93$)
+`G1` | first period grade (from 1 to 20)
+`G2` | second period grade (from 1 to 20)
+`G3` | final grade (from 1 to 20)
+
+# II. Methodology
+
+**Preliminary distribution:**  Firstly, we plot several variables to examine their distribution for our preliminary works. For the Weekend Alcohol Consumption and Workday Alcohol Consumption variables, we factor the intervals of consumption, ranging from “very low” (1) to “very high” (5) to make the data easier to understand and work with. As we used factors for these variables, we visualized the data using a bar chart. Next, for the school grades, we visualize three different period grades by histograms (since grades are mostly continuous) to see if there were any noticeable changes with the passing time in school.
+
+Our third type of variable was the Number of Absences, as we felt that students who drink more might have more absences due to drunkenness or hangovers. Our fourth variable indicated Weekend Study Time, which we included because we thought that students who consumed more alcohol might have less time to study between drunkenness, parties, and hangovers. Of course, we also included a variable for Number of Failed Classes, in the same vein as the variables for grades, as our project focuses on academic success. All in all, these variables picked out from a long list of variables used in the original research on Portuguese schools, because we saw them as being most relevant to academic success.
+
+It is important to notice that we also did not separate the two schools, because we were not sure of the quality of education at each school (we were unfamiliar with the Portuguese education system and the data did not give a clear indication of the quality of education, only that they are both public schools). As shown in the third hypothesis test and appendix II, we will split the students based on variables’ values.
+
+**Exploratory Analysis:** Once we had our preliminary data visualizations and were familiar with the dataset/general shapes of the variables, we began an exploratory analysis, focusing on each set of variables separately, looking at the relationship between academic performance and alcohol consumption from various perspectives. As our main focus was on the proportions of different levels of academic performance based on alcohol consumption, we used visualizations that included both Workday and Weekend alcohol consumption as variables, and our other variables of school grades, Weekend study times, absences, number of failed classes, in turn. Since both Workday and Weekend alcohol consumption are ordinal variables, we used the appropriate ggplot visualizations of boxplot and percent stacked bar charts. While these visualizations can be helpful to see the shapes or patterns in data, we also reduced our results from each variable relationship into summary statistics in tables.  
+
+**First hypothesis:** For our Hypothesis Testing, we had three separate hypotheses for three of our variables. Firstly, to make our testing more streamlined, we aggregated some of our data. For the testing on student grades vs. alcohol consumption, used only Workday alcohol consumption as the main indicator of consumption, and calculated on final grade (`G3`). We performed simulation-based hypothesis tests to evaluate the claim: “Alcohol consumption will significantly predict final grades after controlling for other variables. There will be a negative relationship between grades and alcohol consumption.” We also chose to do a Linear Model for this claim, but the validity of these results is not trustworthy--the equal variance, independence, and normality condition for using a linear model appear to be checked, but the linearity condition is not met by our data. 
+
+**Second hypothesis:** For our second hypothesis, which focuses on Weekend study times, we evaluated the claim that “Alcohol consumption will significantly predict Weekend study times after controlling for other variables. There will be a negative relationship between Weekend study times and alcohol consumption”. We used chi-square and simulation-based tests, as well as linear models to check for this relationship between our two variables. The linear model is not reliable so we concluded based on results of other tests.
+
+**Third hypothesis:** In the third hypothesis, we turned our attention to absences as an indicator of academic performance. The claim: “Alcohol consumption will significantly predict absences after controlling for other variables. There will be a positive relationship between absences and alcohol consumption.” Again, we used a simulation-based approach to test the claim that there is a negative correlation. We also constructed a linear model to test further. However, for the absences variable, we thought that the students’ distance from school to home might play a part in absences, so to control that variable, we looked at the data of students considered “close” to their school. Again, we used simulation and linear regression.
+
+**Final hypothesis:** Finally, we considered the number of failed classes in another hypothesis. The claim: “Alcohol consumption will significantly predict the number of failed classes. There will be a positive relationship between the number of failed classes and alcohol consumption.” We followed the same procedure as in other hypotheses and created both chi-square and simulation-based distributions, and a linear model for this hypothesis test. The linear model is not reliable so we concluded based on results of other tests.
+
+# III. Results
+
+```{r load-packages, message = FALSE, warning = FALSE, echo = FALSE}
+library(tidyverse)
+library(patchwork)
+library(infer)
+library(broom)
+library(viridis)
+```
+
+```{r set-seed-and-reps, message = FALSE, warning = FALSE, echo = FALSE}
+set.seed(123456789)
+rep <- 10000
+```
+
+```{r load-data, message = FALSE, warning = FALSE, echo = FALSE}
+alcohol <- read.csv("data/student-por.csv")
+```
+
+```{r elyse-data, echo = FALSE}
+# I'm making another set of the data so I don't mess up what Nathan already did.
+# We can decide on the final outcomes later.
+
+elyse.alc <- alcohol
+elyse.alc <- elyse.alc%>%
+  mutate(Walc_bi = case_when(Walc == 1 | Walc == 2 | Walc == 3 ~ "low",
+                              Walc == 4 | Walc == 5 ~ "high"),
+         Dalc_bi = case_when(Dalc == 1 | Dalc == 2 | Dalc == 3 ~ "low",
+                              Dalc == 4 | Dalc == 5 ~ "high"),
+         Walc_bi = relevel(as.factor(Walc_bi), 2),
+         Walc_fct = case_when(Walc == 1 ~ "very low",
+                              Walc == 2 ~ "2",
+                              Walc == 3 ~ "3",
+                              Walc == 4 ~ "4",
+                              Walc == 5 ~ "very high"),
+         Dalc_fct = case_when(Dalc == 1 ~ "very low",
+                              Dalc == 2 ~ "2",
+                              Dalc == 3 ~ "3",
+                              Dalc == 4 ~ "4",
+                              Dalc == 5 ~ "very high"),
+         Dalc_bi = relevel(as.factor(Dalc_bi), 2),
+         studytime_fct = as.factor(studytime),
+         fail_fct = as.factor(failures),
+         walc_fct_num = as.factor(Walc),
+         dalc_fct_num = as.factor(Dalc))
+```
+
+## 1. Preliminary/ Distributions
+
+```{r walc-dist}
+walc_dist<- ggplot(data = alcohol, mapping = aes(x = Walc))+
+  geom_histogram(binwidth = 1, color = "darkblue", fill = "lightblue")+ 
+  labs(title = "Distribution of Weekend Alcohol Consumption from 
+  Portugese High Schoolers in 2005-2006", subtitle = 
+    "1 = very low, 5 = very high", x = "Weekend Alcohol Consumption Rating",
+  y = "Number of students")+
+   theme_light()
+```
+
+```{r dalc-dist}
+dalc_dist <- ggplot(data = alcohol, mapping = aes(x = Dalc))+
+  geom_histogram(binwidth = 1,color = "darkblue", fill = "lightblue")+ 
+  labs(title = "Distribution of Workday Alcohol Consumption from 
+  Portugese High Schoolers in 2005-2006", subtitle = 
+    "1 = very low, 5 = very high", x = "Workday Alcohol Consumption Rating",
+  x = "Number of students", y = "Number of Students")+
+   theme_light()
+```
+
+```{r studytime-dist}
+study_dist <- ggplot(data = alcohol, mapping = aes(x = studytime))+
+  geom_histogram(binwidth = 1,color = "darkblue", fill = "lightblue")+ 
+  labs(title = "Distribution of Study Time (hrs) from 
+  Portugese High Schoolers in 2005-2006", x = "Study Time (hrs)",
+  y = "Number of students")+
+  theme_light()
+```
+
+```{r absences-dist}
+abs_dist <- ggplot(data = alcohol, mapping = aes(x = absences))+
+  geom_histogram(binwidth = 1,color = "darkblue", fill = "lightblue")+ 
+  labs(title = "Distribution of Absences from 
+  Portugese High Schoolers in 2005-2006", x = "Number of Absences", 
+  y = "Number of students")+
+   theme_light()
+```
+
+```{r fails-dist}
+fail_dist <- ggplot(data = alcohol, mapping = aes(x = failures))+
+  geom_histogram(binwidth = 1, color = "darkblue", fill = "lightblue")+
+  labs(title = "Distribution of Failed Classes from 
+   Portugese High Schoolers in 2005-2006", x = "Number of Failed Classes",
+   y = "Number of students")+
+   theme_light()
+```
+
+```{r g1-dist}
+g1_dist <- ggplot(data = alcohol, mapping = aes(x = G1))+
+  geom_histogram(binwidth = 1,color = "darkblue", fill = "lightblue")+
+  labs(title = "Distribution of First Semester Grades from 
+  Portugese High Schoolers in 2005-2006", x = "First Semester Grades",
+  y = "Number of students")+
+   theme_light()
+```
+
+```{r g2-dist}
+g2_dist <- ggplot(data = alcohol, mapping = aes(x = G2))+
+  geom_histogram(binwidth = 1, color = "darkblue", fill = "lightblue")+
+  labs(title = "Distribution of Second Semester Grades from 
+  Portugese High Schoolers in 2005-2006", x = "Second Semester Grades",
+  y = "Number of students")+
+   theme_light()
+```
+
+```{r g3-dist}
+g3_dist <- ggplot(data = alcohol, mapping = aes(x = G3))+
+  geom_histogram(binwidth = 1, color = "darkblue", fill = "lightblue")+
+  labs(title = "Distribution of Final Grades from Portugese High 
+  Schoolers in 2005-2006", x = "Final Grades", y = "Number of students")+
+   theme_light()
+```
+
+```{r all-dist, fig.width = 10, fig.height = 16, fig.align="center", out.width="90%"}
+(walc_dist+dalc_dist)/(g1_dist+g2_dist)/(g3_dist+abs_dist)/(study_dist+fail_dist)
+```
+
+The variables with the most normal distribution in our data come from the first, second, and final grades. On the other hand, the weekend alcohol consumption, Workday alcohol consumption, absences, and failed classes variables are highly skewed to the right. This indicates that the vast majority of individuals in our dataset rank very low on these dimensions (i.e. low weekend alcohol consumption, very few absences, etc.). The study time distribution is also slightly skewed to the left, but it's not as dramatic as the other distributions. 
+
+## 2. Exploratory Analysis
+
+### 2.1 Grades
+
+```{r first-hyp-new-val, message = FALSE, warning = FALSE, echo = FALSE}
+#Create new variables based on grading
+#mean_score: the mean score of G1,G2,G3
+#cutoff_all, cutoff_G1, cutoff_G2, cutoff_G3: the cutoff grading 
+#good: >= 15, acceptable: 10 <= x < 15, weak: 5 <= x < 10, very weak: < 5
+
+alcohol <- alcohol %>%
+  rowwise() %>%
+  mutate(mean_score = mean(c(G1,G2,G3)),
+         cutoff_all = case_when(
+            mean_score > 15 ~ "good",
+            mean_score <= 15 & mean_score > 10 ~ "acceptable",
+            mean_score <= 10 & mean_score > 5 ~ "weak",
+            TRUE ~ "very weak"
+         ),
+         cutoff_G1 = case_when(
+            G1 > 15 ~ "good",
+            G1 <= 15 & G1 > 10 ~ "acceptable",
+            G1 <= 10 & G1 > 5 ~ "weak",
+            TRUE ~ "very weak"
+         ),
+         cutoff_G2 = case_when(
+            G2 > 15 ~ "good",
+            G2 <= 15 & G2 > 10 ~ "acceptable",
+            G2 <= 10 & G2 > 5 ~ "weak",
+            TRUE ~ "very weak"
+         ),
+         cutoff_G3 = case_when(
+            G3 > 15 ~ "good",
+            G3 <= 15 & G3 > 10 ~ "acceptable",
+            G3 <= 10 & G3 > 5 ~ "weak",
+            TRUE ~ "very weak"
+         ),
+         cutoff_G1 = factor(cutoff_G1, c("good", "acceptable", "weak", "very weak")),
+         cutoff_G2 = factor(cutoff_G2, c("good", "acceptable", "weak", "very weak")),
+         cutoff_G3 = factor(cutoff_G3, c("good", "acceptable", "weak", "very weak")))
+```
+
+```{r visual-1,fig.height=5, fig.width=10, fig.align="center", out.width="80%", eval = F}
+# visualization between alcohol consumption and grading scale.
+# This is a visualization for proportion of student grade status and alcoholic
+# consumption status. gall, g1, g2, g3 considered respectively for overall
+# grade and first, second, thirs period grades.
+
+#overall grade
+gall <- ggplot(alcohol, aes(Dalc))+
+  geom_bar(aes(fill = cutoff_all), position = "fill")+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "C")+
+  labs(title = "Alcoholic consumption vs Overall Grade",
+       y = "proportion",
+       x = "Workday alcohol consumption",
+       fill = "Grading")
+
+#first period grade
+g1 <- ggplot(alcohol, aes(Dalc))+
+  geom_bar(aes(fill = cutoff_G1), position = "fill")+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "C")+
+  labs(title = "1st period grade",
+       y = "Proportion",
+       color = "1st period grade")+
+  scale_fill_discrete(guide=FALSE)
+  
+#second period grade
+g2 <- ggplot(alcohol, aes(Dalc))+
+  geom_bar(aes(fill = cutoff_G2), position = "fill")+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "C")+
+  labs(title = "2nd period grade",
+       y = "",
+       color = "Grading scale")+
+  scale_fill_discrete(guide=FALSE)
+  
+#Final grade
+g3 <- ggplot(alcohol, aes(Dalc))+
+  geom_bar(aes(fill = cutoff_G3), position = "fill")+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "D")+
+  labs(title = "Final Grade",
+       y = "",
+       fill = "Grading")
+
+#display graphs
+(g1+g2+g3)
+```
+
+```{r elyse-final-grades-visual, fig.align="center", out.width="70%"}
+fin_dalc <- ggplot(alcohol, aes(x=as.factor(Dalc), y=G3)) +
+  geom_boxplot(aes(color = as.factor(Dalc)))+
+  labs(x = "Workday alcohol consumption",
+       y = "Final Grade",
+       title = "Workday consumption vs 
+       Final Grade",
+       color = "Dalc")+
+  stat_summary(fun = mean,
+               geom = "point",
+               size = 2.5)+
+  theme_light()+
+  scale_color_viridis_d(option = "C", guide = FALSE)
+
+fin_walc <- ggplot(alcohol, aes(x=as.factor(Walc), y=G3)) +
+  geom_boxplot(aes(color = as.factor(Walc)))+
+  labs(x = "Weekend alcohol consumption",
+       y = "",
+       title = "Weekend consumption vs 
+       Final Grade")+
+  stat_summary(fun = mean,
+               geom = "point",
+               size = 2.5)+
+  theme_light()+
+  scale_color_viridis_d(option = "C", guide = FALSE)
+
+fin_dalc + fin_walc
+```
+
+```{r hyp-1-statistics, message = FALSE, warning = FALSE, echo = FALSE}
+# This chart shows the proportion of students with the respective grading
+# based on their consumption level
+prop_grade <- alcohol %>%
+  group_by(Dalc) %>%
+  count(cutoff_all) %>%
+  mutate(prop = n/sum(n))
+
+# These are statistic of proportion of weak and very weak student among each
+# level of alcohol consumption
+
+weak_1 <- prop_grade %>%
+  filter(Dalc == 1, cutoff_all == "weak") %>%
+  pull() + prop_grade %>%
+  filter(Dalc == 1, cutoff_all == "very weak") %>%
+  pull()
+
+weak_2 <- prop_grade %>%
+  filter(Dalc == 2, cutoff_all == "weak") %>%
+  pull() + prop_grade %>%
+  filter(Dalc == 2, cutoff_all == "very weak") %>%
+  pull()
+
+weak_3 <- prop_grade %>%
+  filter(Dalc == 3, cutoff_all == "weak") %>%
+  pull()
+
+weak_4 <- prop_grade %>%
+  filter(Dalc == 4, cutoff_all == "weak") %>%
+  pull() + prop_grade %>%
+  filter(Dalc == 4, cutoff_all == "very weak") %>%
+  pull()
+
+weak_5 <- prop_grade %>%
+  filter(Dalc == 5, cutoff_all == "weak") %>%
+  pull() 
+```
+
+```{r obs-stat-1, message = FALSE, warning = FALSE, echo = FALSE}
+cor_dalc_final <- alcohol %>%
+  specify(Dalc ~ G3) %>%
+  calculate(stat = "correlation")
+
+cor_walc_final <- alcohol %>%
+  specify(Walc ~ G3) %>%
+  calculate(stat = "correlation")
+```
+
+**Final grade:** The median of final grade decreases when the level of alcoholic consumption increases and the average mean taken between each group also has a decreasing trend when considered by both Workday and Weekend consumption. The sample correlation of Workday and Weekend consumption with final grade (`r round(cor_dalc_final, 3)`, `r round(cor_walc_final, 3)`) are negative. 
+
+```{r eval = F}
+For all grades, we split the students into 4 groups by their grades (good: grade $\geq 16$, acceptable: $11\leq$ grade $\leq 15$, weak: $6\leq$ grade $\leq 10$, and very weak: grade $\leq 5$). From the first graph, higher workday alcohol consumption associates with a higher proportion of weak and very weak students. 
+```
+
+### 2.2. Weekly study times
+
+```{r study-walc-barplot, fig.width = 11, fig.height = 5}
+study.walc.bar <- ggplot(data = elyse.alc, mapping = aes(x = reorder(Walc_fct, 
+                  Walc, na.rm = TRUE), fill = reorder(studytime_fct, studytime
+                  ,na.rm = TRUE)))+
+  geom_bar(position = "fill")+
+  labs(x = "Weekend Alcohol Consumption", fill = "Study Time", title
+        = "Weekend Alcohol Consumption", 
+        y = "")+
+  theme_light()
+
+study.dalc.bar <- ggplot(data = elyse.alc, mapping = aes(x = reorder(Dalc_fct, 
+                  Dalc, na.rm = TRUE), fill = reorder(studytime_fct, studytime
+                  ,na.rm = TRUE)))+
+  geom_bar(position = "fill")+
+  labs(x = "Workday Alcohol Consumption", fill = "Study Time", 
+        title = "Workday Alcohol Consumption", 
+        y = "Proportion")+
+    scale_fill_discrete(guide=FALSE)+
+  theme_light()
+
+(study.dalc.bar+study.walc.bar)+ plot_annotation(
+   title="The Relationship between amount of Study Time and Alcohol Consumption",
+   subtitle = "From Portuguese High Schoolers during 2005-2006"
+ )
+```
+
+```{r explore-2-cor}
+cor_dalc_stdy <- alcohol %>%
+  specify(Dalc ~ studytime) %>%
+  calculate(stat = "correlation") %>%
+  pull()
+
+cor_walc_stdy <- alcohol %>%
+  specify(Walc ~ studytime) %>%
+  calculate(stat = "correlation") %>%
+  pull()
+```
+
+The proportion of students spending less Weekly study time is generally higher when alcohol consumption (Workday and Weekend) is higher. However, this trend isn’t clearly seen with workday alcohol consumption. Nevertheless, the "very high" alcohol consumption group has a higher proportion of high Weekend study time than some other groups'. The correlation between workday alcohol consumption and weekly study time is `r round(cor_dalc_stdy,3)`, while the correlation between weekend alcohol consumption and weekly study time is `r round(cor_walc_stdy, 3)`. We can see that both sample correlations are negative.
+
+### 2.3. Absences
+
+```{r third-hyp-visual, fig.align="center", out.width="70%"}
+g_dalc <- ggplot(alcohol, aes(x=as.factor(Dalc), y=absences)) +
+  geom_boxplot(aes(color = as.factor(Dalc)))+
+  labs(x = "Workday alcohol consumption",
+       y = "Number of Absences",
+       title = "Workday consumption vs 
+       Absences",
+       color = "Dalc")+
+  stat_summary(fun = mean,
+               geom = "point",
+               size = 2.5)+
+  theme_light()+
+  scale_color_viridis_d(option = "C", guide = FALSE)
+
+g_walc <- ggplot(alcohol, aes(x=as.factor(Walc), y=absences)) +
+  geom_boxplot(aes(color = as.factor(Walc)))+
+  labs(x = "Weekend alcohol consumption",
+       y = "",
+       title = "Weekend consumption vs 
+       Absences")+
+  stat_summary(fun = mean,
+               geom = "point",
+               size = 2.5)+
+  theme_light()+
+  scale_color_viridis_d(option = "C", guide = FALSE)
+
+g_dalc + g_walc
+```
+
+```{r statistics-absence, message = FALSE, warning = FALSE, echo = FALSE}
+# This calculate some statistics of the sample
+
+avg_absence_dai <- alcohol %>%
+  group_by(Dalc) %>%
+  summarise(mean = mean(absences))
+
+avg_absence_week <- alcohol %>%
+  group_by(Walc) %>%
+  summarise(mean = mean(absences))
+```
+
+Generally, the absence is positively associated with alcohol consumption. Groups with higher alcohol consumption level will have a higher mean and median of absences, especially when considered by weekend. However, outliers concentrate mostly in the group with lower alcohol consumption, with some absences up to 32 days. 
+
+Table: Average number of absences considered by workday and weekly consumption
+
+Workday alcohol consumption | 1 | 2 | 3 | 4 | 5
+------ | -- | -- | -- | -- | --
+Average absences| 3.195 | 4.256 | 5.070 | 4.765 | 7.059
+
+Weekend alcohol consumption | 1 | 2 | 3 | 4 | 5
+------ | -- | -- | -- | -- | --
+Average absences| 2.891 | 3.867 | 3.9 | 4.644 | 5.244
+ 
+```{r explore-3-cor}
+cor_dalc_abs <- alcohol %>%
+  specify(Dalc ~ absences) %>%
+  calculate(stat = "correlation") %>%
+  pull()
+
+cor_walc_abs <- alcohol %>%
+  specify(Walc ~ absences) %>%
+  calculate(stat = "correlation") %>%
+  pull()
+```
+
+The sample correlation between workday alcohol consumption and weekly study time is `r round(cor_dalc_abs,3)`, while the correlation between weekend alcohol consumption and weekly study time is `r round(cor_walc_abs, 3)`. We can see that both sample correlations are positive.
+
+### 2.4. Number of failed classes
+
+```{r walc-dalc-fail-barplot, fig.width = 10, fig.height = 5}
+walc.fail <- ggplot(data = elyse.alc, mapping = aes(x = reorder(Walc_fct, Walc, 
+             na.rm = TRUE), fill = reorder(fail_fct, failures, na.rm = TRUE)))+
+  geom_bar(position = "fill")+
+  labs(x = "Weekend Alcohol Consumption", fill = "# Failed Classes", 
+        y = "Proportion")+
+    scale_fill_discrete(guide=FALSE)+
+   ggtitle("Weekend consumption")+
+  theme_light()
+
+dalc.fail <- ggplot(data = elyse.alc, mapping = aes(x = reorder(Dalc_fct, Dalc, 
+             na.rm = TRUE), fill = reorder(fail_fct, failures, na.rm = TRUE)))+
+  geom_bar(position = "fill")+
+  labs(x = "Workday Alcohol Consumption", fill = "# Failed Classes", 
+        y = "")+
+   ggtitle("Workday consumption")+
+  theme_light()
+
+(walc.fail+dalc.fail) + plot_annotation(
+   title="The Relationship between amount of Failed Classes and Alcohol Consumption",
+   subtitle = "From Portuguese High Schoolers during 2005-2006"
+ )
+```
+
+```{r explore-4-cor}
+cor_dalc_fail <- alcohol %>%
+  specify(Dalc ~ failures) %>%
+  calculate(stat = "correlation") %>%
+  pull()
+
+cor_walc_fail <- alcohol %>%
+  specify(Walc ~ failures) %>%
+  calculate(stat = "correlation") %>%
+  pull()
+```
+
+A large proportion of students did not fail any classes. However, in the very high alcohol consumption group (both Weekend and Workday), the proportion of students failing at least 2 classes is much larger compared to other groups. Sample correlations of alcohol consumption vs failures are positive (`r round(cor_dalc_fail, 3)`, `r round(cor_walc_fail)`).
+
+## 3. Hypothesis test
+
+### 3.1. Final Grades
+
+**First hypothesis: (Alternative)** *Alcohol consumption will significantly predict final grades after controlling for other variables. There will be a negative relationship between grades and alcohol consumption.*
+
+*Null: Alcohol consumption will not significantly predict final grades after controlling for other variables. There will be no relationship between grades and alcohol consumption.*
+
+```{r note-1, message = FALSE, warning = FALSE, echo = FALSE}
+# In this part I will use visualization, calculate statistic, perform
+# simulation-based hypothesis tests to test correlation between Workday alcohol
+# consumption and overall grade. 
+
+# Additionally, there is a CLT-based hypothesis test whether the condition 
+# good or bad affects the student grade, but it is quite irrelevant to alcohol
+# consumption. I suggest that we alternatively use Linear Model, how y'all think?
+```
+
+**Linear model**: *Weekend Alcohol Consumption (Walc)*
+
+```{r uni-walc-g3, echo = FALSE, include=FALSE}
+uni_walc_g3 <- lm(G3 ~ walc_fct_num, data = elyse.alc)
+tidy(uni_walc_g3)
+
+p.val.walc.g3 <- tidy(uni_walc_g3)%>%
+  filter(term == "Walc_bihigh")%>%
+  pull(p.value)
+```
+
+```{r glance-uni-walc-g3, echo = FALSE, include=FALSE}
+glance(uni_walc_g3)
+
+r.sqd.g3.walc <- glance(uni_walc_g3)%>%
+  pull(r.squared)
+
+adjr.g3.walc <- glance(uni_walc_g3)%>%
+  pull(adj.r.squared)
+```
+
+```{r hyp-1-display-week-model}
+tidy(uni_walc_g3) %>%
+  kable()
+```
+We obtain the model $$\widehat{\text{G3}} = 12.36 - 0.100 \times \text{Walc2} - 0.694 \times \text{Walc3} - 1.326 \times \text{Walc4} - 1.805 \times \text{Walc5}.$$ With weekend alcohol consumption as the only predictor, we expect a student's final grade to decrease by 0.100 - 1.805 points with an increase in weekend alcohol consumption. The coefficients continually decrease as the difference in the factors increase. The p-values of these relationships range from insignificant to significant at an alpha level of 0.05. The significant relationships are between very low and somewhat high (~0 < 0.05) and very low and very high (~`r round(p.val.walc.g3,3)`< 0.05). These relationships provide sufficient evidence to reject the null. Overall, this result can be used to support a negative relationship between final grades and alcohol consumption.
+
+**Linear model:** *Workday Alcohol Consumption (Dalc)*
+
+```{r uni-dalc-g3, echo = FALSE, include = FALSE}
+uni_dalc_g3 <- lm(G3 ~ dalc_fct_num, data = elyse.alc)
+
+tidy(uni_dalc_g3)
+
+p.val.dalc.g3 <- tidy(uni_dalc_g3)%>%
+  filter(term == "dalc_fct_num5")%>%
+  pull(p.value)
+```
+
+```{r glance-uni-dalc-g3, include = FALSE, echo = FALSE}
+glance(uni_dalc_g3)
+
+r.sqd.g3.dalc <- glance(uni_dalc_g3)%>%
+  pull(r.squared)
+
+adjr.g3.dalc <- glance(uni_dalc_g3)%>%
+  pull(adj.r.squared)
+```
+
+```{r hyp-1-display-day-model}
+tidy(uni_dalc_g3) %>%
+  kable()
+```
+We obtain the model $$\widehat{\text{G3}} = 12.30 - 0.936 \times \text{Dalc2} - 1.160 \times \text{Dalc3} - 3.358 \times \text{Dalc4} - 2.06 \times \text{Dalc5}.$$ With workday alcohol consumption as the only predictor, we expect a student's final grade to approximately decrease by 0.936 - 3.358 points with an increase in daily alcohol consumption. All of the relationships are significant at an alpha of 0.05. Thus, there is sufficient evidence to reject the null. Like the previous result, this finding can support a negative relationship between the two variables. Surprisingly, however, the relationship between very low and somewhat high consumption has a lower p-value and coefficient than the relationship between very low and very high consumption. This is divergent from the trend seen in the previous analysis where the coefficients and p-values continually decreased as the difference in factors increased. These findings are also different from the previous analysis in that all of the relationship observed are significant and the range of coefficients is higher. This indicates that workday alcohol consumption may have a greater impact on final grades than weekend alcohol consumption. 
+
+For both models, we obtained small r-squared and adjusted r-squared values, thus suggesting that alcohol consumption accounts for small variability in final grade, even though the relationship is significant (Appendix III.1).
+
+```{r hyp-test-1}
+#hypothesis testing for correlation between alcoholic consumption
+null_dist_D <- alcohol %>%
+  specify(Dalc ~ G3) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+```
+
+```{r hyp-test-2}
+#hypothesis testing for correlation between alcoholic consumption
+null_dist_W <- alcohol %>%
+  specify(Walc ~ G3) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+```
+
+```{r p-value-1}
+p_val_grade <- null_dist_D %>%
+  get_p_value(obs_stat = cor_dalc_final, direction = "less") %>%
+  pull()
+```
+
+```{r p-value-2}
+p_val_grade_W <- null_dist_W %>%
+  get_p_value(obs_stat = cor_walc_final, direction = "less") %>%
+  pull()
+```
+
+**Simulation-based testing:** The sample correlation of final grade vs workday and weekend alcohol consumption is `r round(cor_dalc_final, 3)` and `r round(cor_walc_final, 3)`, respectively. When performing simulation-based hypothesis testing to assert whether there is a negative correlation between alcohol consumption and final grade, the p-values for both Workday and Weekend consumption hypothesis tests are extremely small that can't be detected among the null distributions. So we conclude that there is a negative correlation between alcohol consumption and student's final grade.
+
+### 3.2. Weekly study times
+
+**Second hypothesis: (Alternative)** *Alcohol consumption will significantly predict weekly study times after controlling for other variables. There will be a negative relationship between weekly study times and alcohol consumption.*
+
+*Null: Alcohol consumption will not significantly predict weekly study times after controlling for other variables. There will be no relationship between weekly study times and alcohol consumption*
+
+**Chi-square test:** We use a Chi-Square distribution to test whether there is a relationship between alcohol consumption and Weekly study times. 
+
+```{r chart-studytime-walc}
+elyse.alc%>%
+  group_by(reorder(Walc_fct, Walc, na.rm = TRUE))%>%
+  count(studytime_fct)%>%
+  pivot_wider(names_from = studytime_fct, values_from = n) %>%
+  rename('Weekend Alcohol Consumption' = 
+           'reorder(Walc_fct, Walc, na.rm = TRUE)') %>%
+  knitr::kable(caption = 
+                 "Level of alcohol consumption by weekly study times")
+
+elyse.alc%>%
+  group_by(reorder(Dalc_fct, Dalc, na.rm = TRUE))%>% #Not working
+  count(studytime_fct)%>%
+  pivot_wider(names_from = studytime_fct, values_from = n)%>%
+  mutate_all(~replace(., is.na(.), 0)) %>%
+  rename('Workday Alcohol Consumption' = 
+           'reorder(Dalc_fct, Dalc, na.rm = TRUE)') %>%
+  knitr::kable()
+```
+
+```{r second-hyp-dai, message = FALSE, warning = FALSE, echo = FALSE}
+alcohol <- alcohol %>%
+  mutate(Dalc_fct = as.factor(Dalc),
+         studytime_fct = as.factor(studytime),
+         Walc_fct = as.factor(Walc))
+
+chi_sq_daily <- alcohol %>% 
+  chisq_test(formula = Dalc_fct ~ studytime_fct)
+```
+
+```{r second-hyp-week, message = FALSE, warning = FALSE, echo = FALSE}
+chi_sq_week <- alcohol %>% 
+  chisq_test(formula = Walc_fct ~ studytime_fct)
+```
+
+The chi-square statistic of `r round(chi_sq_daily$statistic, 3)` in a chi-square distribution with degree of freedom $12$ give a really small p-value `r round(chi_sq_daily$p_value, abs(floor(log10(chi_sq_daily$p_value)-3)))`. Similarly the chi-square test for Weekend alcohol consumption and Weekly study time also has a small p-value `r round(chi_sq_week$p_value, abs(floor(log10(chi_sq_week$p_value)-3)))`, thus giving enough evidence to show that there is a relationship between alcohol consumption and Weekly study times. 
+
+```{r corr-hyp-test, message = FALSE, warning = FALSE, echo = FALSE}
+null_dist_stdy_dai <- alcohol %>%
+  specify(Dalc ~ studytime) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+
+cor_stdy_dai <- alcohol %>%
+  specify(Dalc ~ studytime) %>%
+  calculate(stat = "correlation") %>%
+  pull()
+
+null_dist_stdy_week <- alcohol %>%
+  specify(Walc ~ studytime) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+
+cor_stdy_week <- alcohol %>%
+  specify(Walc ~ studytime) %>%
+  calculate(stat = "correlation") %>%
+  pull()
+```
+
+```{r test-null-1, eval = F}
+ggplot(null_dist_stdy_dai, aes(stat))+
+  geom_histogram()
+
+ggplot(null_dist_stdy_week, aes(stat))+
+  geom_histogram()
+```
+
+```{r p-val-std-dai,  message = FALSE, warning = FALSE, echo = FALSE}
+p_val_dai <- null_dist_stdy_dai %>%
+  get_p_value(obs_stat = cor_stdy_dai, direction = "less")
+
+p_val_week <- null_dist_stdy_week %>%
+  get_p_value(obs_stat = cor_stdy_week, direction = "less")
+```
+
+**Simulation-based testing:** There is a greater negative correlation between Weekend alcohol consumption with study times (`r round(cor_stdy_week, 3)`), compared to workday alcohol consumption. When performing hypothesis test to test whether alcohol consumption would negatively correlate with Weekly study time, null distributions with `r rep` generated replications show no possible correlation as extreme as our observed statistic, leading to our conclusion that there is a significant negative trend between alcohol consumption status and Weekly study time of the student, and it is more clearly shown when considered consumption level by weekend.
+
+```{r lin-model-studytime, message = FALSE, warning = FALSE, echo = FALSE}
+# This linear model considers the effects of Dalc and Walc onto studytime
+
+m_stdy_dai_week <- lm(studytime ~ Dalc + Walc + Dalc*Walc, data = alcohol)
+
+m_stdy_dai_week <- tidy(m_stdy_dai_week) %>%
+  select(term, estimate)
+
+intercept <- m_stdy_dai_week %>%
+  slice(1) %>%
+  select(estimate) %>%
+  pull()
+
+Dalc_coff <-  m_stdy_dai_week %>%
+  filter(term == "Dalc") %>%
+  select(estimate) %>%
+  pull()
+
+Walc_coff <-  m_stdy_dai_week %>%
+  filter(term == "Walc") %>%
+  select(estimate) %>%
+  pull()
+
+Dalc_Walc <- m_stdy_dai_week %>%
+  filter(term == "Dalc:Walc") %>%
+  select(estimate) %>%
+  pull()
+```
+
+```{r linear-draft-studytime, eval = F}
+# When estimating study time by alcohol consumption, we obtain the model $$\text{Study time} = 0.0538 + 0.1 \text{Dalc} + 0.0286 \text{Walc} - 0.0114 \text{Dalc} \times \text{Walc}.$$This partly suggests that the alcohol consumption is positively correlated to the number of failure classes.
+```
+
+**Linear model:** When estimating study time by alcohol consumption, we obtain the model $$\text{Study time} = 2.246 - 0.003 \text{Dalc} - 0.134 \text{Walc} - 0.001 \text{Dalc} \times \text{Walc}.$$This model suggest that we have a negative relationship between alcohol consumption and Weekly study time based on the data we observed. However, when checking the conditions of this model (Appendix III.2), we find the conditions very insufficiently met, so it is not reliable to make conclusion from this linear model.
+
+### 3.3. Absences
+
+**Third hypothesis: (Alternative)** *Alcohol consumption will significantly predict absences after controlling for other variables. There will be a positive relationship between absences and alcohol consumption.*
+
+*Null hypothesis: Alcohol consumption will not significantly predict absences after controlling for other variables. There will be no relationship between absences and alcohol consumption*
+
+```{r note-3, message = FALSE, warning = FALSE, echo = FALSE}
+# Again I will use a simulation-based hypothesis test to assert the prediction
+# about the negative correlation of alcohol consumption, a visualization to
+# roughly estimate the sample stats, and a linear model to test
+
+# I did control a variable `reason`. But you guys can think about controlling 
+# more
+```
+
+```{r linear-modeal-absences, message = FALSE, warning = FALSE, echo = FALSE}
+m_abs_score <- lm(absences ~ Dalc + Walc + Dalc/Walc, data = alcohol)
+
+m_abs_score <- tidy(m_abs_score)
+
+slope_Dalc <- m_abs_score %>%
+  filter(term == "Dalc") %>%
+  select(estimate) %>%
+  pull()
+
+slope_Walc <- m_abs_score %>%
+  filter(term == "Walc") %>%
+  select(estimate) %>%
+  pull()
+
+p_val_dalc <- m_abs_score %>%
+  filter(term == "Dalc") %>%
+  select(p.value) %>%
+  pull()
+```
+
+```{r hyp-test-absence, message = FALSE, warning = FALSE, echo = FALSE}
+null_absence_dalc <- alcohol %>%
+  specify(Dalc~ absences) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+
+null_absence_walc <- alcohol %>%
+  specify(Walc ~ absences) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+```
+
+```{r test-null, eval = F}
+#evaluate the null distribution. This won't be printed in the pdf.
+
+ggplot(null_absence_dalc, aes(stat)) + 
+  geom_histogram()
+
+ggplot(null_absence_walc, aes(stat)) +
+  geom_histogram()
+```
+
+
+```{r obs-absence, message = FALSE, warning = FALSE, echo = FALSE}
+obs_abs_dalc <- alcohol %>%
+  specify(Dalc~ absences) %>%
+  calculate(stat = "correlation")
+
+obs_abs_walc <- alcohol %>%
+  specify(Walc ~ absences) %>%
+  calculate(stat = "correlation")
+```
+
+```{r p-absence, message = FALSE, warning = FALSE, echo = FALSE}
+p_val_abs_dalc <- null_absence_dalc %>%
+  get_p_value(obs_stat = obs_abs_dalc, direction = "greater") 
+
+p_val_abs_walc <- null_absence_walc %>%
+  get_p_value(obs_stat = obs_abs_walc, direction = "greater")
+```
+
+Generally, Workday alcohol or Weekend alcohol consumption positively associates with the average absences of students. This positive trend is clearer when considering Weekend alcohol consumption. 
+
+**Linear model:** When constructing a linear model to predict numbers of absences with predictors workday and Weekend alcohol consumption, we get positive slopes of both Workday (`r round(slope_Dalc,3)`) and Weekend (`r round(slope_Walc, 3)`) consumption (see appendix III.2 for conditions checked). P-values for both coefficients are small.
+
+```{r linear-hyp-3-display}
+m_abs_score %>%
+  knitr::kable()
+```
+
+**Simulation-based testing:** When we perform hypothesis testing to test whether there is a positive relationship between alcohol consumption and absences, we didn't observe any values as extreme as our observed statistics in the null distributions (p-values of $0$ for Weekend and Workday consumption tests). Hence, we have enough evidence to conclude that alcohol consumption is positively correlated to the number of absences in students. 
+
+However, the high number of absences may correspond to whether the student lives far from the school or not. Now, we define a student living "closed" to their school if the reason they choose the school is that it is closed to their home (`reason` = "home"`). We will perform an additional test to consider only these "closed-to-school" students.  
+
+```{r condition-absence, message = FALSE, warning = FALSE, echo = FALSE}
+condition_absence <- alcohol %>%
+  filter(reason == "home")
+```
+
+```{r third-hyp-visual-2, fig.align="center", out.width="70%"}
+g_dalc <- ggplot(condition_absence, aes(x=Dalc, y=absences, group=Dalc)) +
+  geom_boxplot(aes(color = as.factor(Dalc)))+
+  labs(x = "Workday alcohol consumption",
+       y = "Absences",
+       title = "Workday consumption vs Absences",
+       subtitle = ("With students closed to their school"),
+       color = "Dalc")+
+  stat_summary(fun = mean,
+               geom = "point",
+               size = 2.5)+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "C", guide = F)
+
+g_walc <- ggplot(condition_absence, aes(x=Walc, y=absences, group=Walc)) +
+  geom_boxplot(aes(color = as.factor(Walc)))+
+  labs(x = "Weekend alcohol consumption",
+       y = "",
+       title = "Weekend consumption vs Absences",
+       subtitle = ("With students closed to their school"),
+       color = "Walc")+
+  stat_summary(fun = mean,
+               geom = "point",
+               size = 2.5)+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "C", guide = F)
+
+g_dalc + g_walc
+```
+
+```{r statistics-absence-2, message = FALSE, warning = FALSE, echo = FALSE}
+# This calculate some statistics of the sample
+
+avg_absence_dai_2 <- condition_absence %>%
+  group_by(Dalc) %>%
+  summarise(mean = mean(absences))
+
+avg_absence_week_2 <- condition_absence %>%
+  group_by(Walc) %>%
+  summarise(mean = mean(absences))
+```
+
+```{r linear-modeal-absences-2, message = FALSE, warning = FALSE, echo = FALSE}
+m_abs_score_2 <- lm(absences ~ Dalc + Walc + Dalc/Walc, 
+                    data = condition_absence)
+
+m_abs_score_2 <- tidy(m_abs_score_2)
+
+slope_Dalc_2 <- m_abs_score_2 %>%
+  filter(term == "Dalc") %>%
+  select(estimate) %>%
+  pull()
+
+slope_Walc_2 <- m_abs_score_2 %>%
+  filter(term == "Walc") %>%
+  select(estimate) %>%
+  pull()
+
+p_val_dalc_2 <- m_abs_score %>%
+  filter(term == "Dalc") %>%
+  select(p.value) %>%
+  pull()
+```
+
+```{r hyp-test-absence-2, message = FALSE, warning = FALSE, echo = FALSE}
+null_absence_dalc_2 <- condition_absence %>%
+  specify(Dalc~ absences) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+
+null_absence_walc_2 <- condition_absence %>%
+  specify(Walc ~ absences) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+```
+
+```{r test-null-3, eval = F}
+#evaluate the null distribution. This won't be printed in the pdf.
+
+ggplot(null_absence_dalc_2, aes(stat)) + 
+  geom_histogram()
+
+ggplot(null_absence_walc_2, aes(stat)) +
+  geom_histogram()
+```
+
+```{r obs-absence-2, message = FALSE, warning = FALSE, echo = FALSE}
+obs_abs_dalc_2 <- condition_absence %>%
+  specify(Dalc~ absences) %>%
+  calculate(stat = "correlation")
+
+obs_abs_walc_2 <- condition_absence %>%
+  specify(Walc ~ absences) %>%
+  calculate(stat = "correlation")
+```
+
+```{r p-absence-2, message = FALSE, warning = FALSE, echo = FALSE}
+p_val_1 <- null_absence_dalc_2 %>%
+  get_p_value(obs_stat = obs_abs_dalc_2, direction = "greater") %>%
+  pull()
+
+p_val_2 <- null_absence_walc_2 %>%
+  get_p_value(obs_stat = obs_abs_walc_2, direction = "greater") %>%
+  pull()
+```
+
+There is still a positive correlation between alcohol consumption and absences, after controlling students "closed" to their school. When we perform **simulation-based hypothesis testing** to test whether there is a positive relationship between alcohol consumption and absences, we get small p-values (`r p_val_1` and `r p_val_2`) for both hypotheses tests. Hence, we have enough evidence to conclude that alcohol consumption is positively correlated to the number of absences, regardless of the geographical condition.
+
+One thing to notice is that the same **linear model** when controlling the variable has positive slopes for alcohol consumption (`r round(slope_Dalc_2,3)` and `r round(slope_Walc_2,3)` for workday and weekday, respectively). But p-values for both coefficients is high ($0.857$ and $0.077$), so it is not reliable, but rather it suggests there are generally a positive association between absences and alcohol consumption in our data. 
+
+### 3.4. Number of failed classes
+
+**Fourth hypothesis: (Alternative)** *Alcohol consumption will significantly predict the number of failed classes after controlling for other variables. There will be a positive relationship between the number of failed classes and alcohol consumption.*
+
+*Null: Alcohol consumption will not significantly predict the number of failed classes after controlling for other variables. There will be no relationship between the number of failed classes and alcohol consumption.*
+
+**Chi-square test:** We use a Chi-Square distribution to test whether there is a relationship between alcohol consumption and Weekend study times. 
+
+```{r walc-fail-table, eval = F}
+elyse.alc%>%
+  group_by(reorder(Walc_fct, Walc, na.rm = TRUE))%>%
+  count(fail_fct)%>%
+  pivot_wider(names_from = fail_fct, values_from = n)%>%
+  mutate_all(~replace(., is.na(.), 0)) %>%
+  rename('Weekend Alcohol Consumption' = 
+           'reorder(Walc_fct, Walc, na.rm = TRUE)') %>%
+  knitr::kable(caption = 
+                 "Level of alcohol consumption by the number of failed classes")
+
+elyse.alc%>%
+  group_by(reorder(Dalc_fct, Dalc, na.rm = TRUE))%>%
+  count(fail_fct)%>%
+  pivot_wider(names_from = fail_fct, values_from = n)%>%
+  mutate_all(~replace(., is.na(.), 0)) %>%
+  rename('Workday Alcohol Consumption' = 
+           'reorder(Dalc_fct, Dalc, na.rm = TRUE)')%>%
+  knitr::kable(caption = 
+                 "Level of alcohol consumption by the number of failed classes")
+```
+Table: Level of alcohol consumption by the number of failed classes
+
+|Weekend Alcohol Consumption |   0|  1|  2|  3|
+|:--------------------------|---:|--:|--:|--:|
+|very low                   | 212| 23|  7|  5|
+|2                          | 133| 15|  2|  0|
+|3                          |  99| 15|  2|  4|
+|4                          |  69| 14|  2|  2|
+|very high                  |  36|  3|  3|  3|
+
+|Workday Alcohol Consumption |   0|  1|  2|  3|
+|:-------------------------|---:|--:|--:|--:|
+|very low                  | 392| 39| 10| 10|
+|2                         | 102| 15|  3|  1|
+|3                         |  31|  9|  2|  1|
+|4                         |  11|  6|  0|  0|
+|very high                 |  13|  1|  1|  2|
+
+```{r fourth-hyp, message = FALSE, warning = FALSE, echo = FALSE}
+alcohol <- alcohol %>%
+  mutate(failure_fct = as.factor(failures))
+
+chi_sq_daily_fail <- alcohol %>% 
+  chisq_test(formula = Dalc_fct ~ failure_fct)
+
+chi_sq_week_fail <- alcohol %>% 
+  chisq_test(formula = Walc_fct ~ failure_fct)
+```
+The chi-square statistic of `r round(chi_sq_daily_fail$statistic, 3)` in a chi-square distribution with degree of freedom $12$ give a really small p-value `r round(chi_sq_daily_fail$p_value, abs(floor(log10(chi_sq_daily_fail$p_value)-3)))`. However, the chi-square test for Weekend alcohol consumption and the number of failure classes has a large p-value (`r round(chi_sq_week_fail$p_value, 3)`). So we have enough evidence to conclude that there is a relationship between Workday alcohol consumption with the number of failed classes, but for Weekend alcohol consumption, we can't.
+
+```{r corr-hyp-test-2, message = FALSE, warning = FALSE, echo = FALSE}
+null_dist_fail_dai <- alcohol %>%
+  specify(Dalc ~ failures) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+
+cor_fail_dai <- alcohol %>%
+  specify(Dalc ~ failures) %>%
+  calculate(stat = "correlation") %>%
+  pull()
+
+null_dist_fail_week <- alcohol %>%
+  specify(Walc ~ failures) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+
+cor_fail_week <- alcohol %>%
+  specify(Walc ~ failures) %>%
+  calculate(stat = "correlation") %>%
+  pull()
+```
+
+```{r test-null-2, eval = F}
+ggplot(null_dist_fail_dai, aes(stat))+
+  geom_histogram()
+
+ggplot(null_dist_fail_week, aes(stat))+
+  geom_histogram()
+```
+
+```{r p-val-fail,  message = FALSE, warning = FALSE, echo = FALSE}
+p_val_dai_fail <- null_dist_fail_dai %>%
+  get_p_value(obs_stat = cor_fail_dai, direction = "greater")
+
+p_val_week_fail <- null_dist_fail_week %>%
+  get_p_value(obs_stat = cor_fail_week, direction = "greater")
+```
+
+**Simulation-based testing:** When performing a hypothesis test on whether alcohol consumption would positively correlate with the number of failed classes, we obtain two p-values of `r p_val_dai_fail` and `r p_val_week_fail` for Workday and Weekend alcohol consumption, respectively. At the level $\alpha = 0.05$, these p-value are really small, so we have enough evidence to show that alcohol consumption is positively correlated with the number of failed classes.
+
+**Linear model:** We perform linear model testing for this hypothesis and get a model $\text{Study time} = 0.0538 + 0.1 \text{Dalc} + 0.0286 \text{Walc} - 0.0114 \text{Dalc} \times \text{Walc}$. However, when checking the conditions of this model (Appendix III.4), we find the conditions very insufficiently met, so it is not reliable to make conclusion from this linear model.
+
+# IV. Discussion
+
+Through our detailed statistical analysis of the link between alcohol consumption and academic performance, it is safe to conclude that increased alcohol consumption negatively with academic performance. This can be seen through our various visualizations, including Workday and Weekend alcohol consumption and grades, the relationship between study time and alcohol consumption, and through the hypotheses, tests conducted where a strong statistical connection between alcohol consumption and academic performance was observed. Some ways we can improve our analysis is examining the other variables besides alcohol consumption that might correlate with academic performance to determine the level of impact that drinking has on grades compared to other factors. This would be able to provide a more comprehensive view of the magnitude of the effect that drinking has on students.
+
+As touched upon briefly in the introduction, the reliability of the data collected can be put into question. Taking data from only two schools is adequate on a small scale, but not enough to make a large-scale generalization of students in the Portuguese public school system. Also, we don’t know the accuracy of the students’ answers, as high school-aged children might be reluctant to admit their alcohol use or poor study habits, regardless of the anonymity of the study. One other ramification is that we lack some data variables' backgrounds to have some more in-depth conclusions. The original study also did not give any contexts about the failing threshold of the grading system in those schools. Therefore, we can only conclude significant negative correlations between grades and alcohol consumption, but we can't make further claims about whether students tend to have failed grades or not, given their alcohol consumption. Also, many of the variables are collected on the 1 to 5 scale. Therefore the information can be misleading, which prompts false conclusions. 
+
+There are some things our group would do differently in conducting our statistical analysis. As stated earlier, we would analyze more about the relationship of the rest of the variables and see if we could get a better comprehensive conclusion based on more conditions (family status, internet, love status,...). We had many variables in our data set (around 33) and we only used nearly 10 in our analysis. Another thing we would do differently is using a different statistical test, namely the ANOVA test, because the linear regression model is not as effective with our data as other tests could be.
+
+# Bibliography
+
+1. Cortez P and Silva A. 2008. Using data mining to pre-dict secondary school student performance.
+
+2. Student Alcohol Consumption dataset: https://www.kaggle.com/uciml/student-alcohol-consumption
+
+3. Chodkiewicz J, Talarowska M, Miniszewska J, Nawrocka N, and Bilinski P. 2020. Alcohol Consumption Reported during the COVID-19 Pandemic: The Initial Stage. *Int. J. Environ. Res. Public Health* 17:4677. 10.3390/ijerph17134677
+
+4. https://www.npr.org/2020/10/05/920437811/americans-are-drinking-14-more-often-during-pandemic-study-finds
+
+# Appendix
+
+These are additional analyses for further conclusions between alcohol consumption and student study performance. More variables will be controlled when analyzing the hypotheses. We also present include checking of model's conditions and visualizations of null distributions used in the hypothesis testing. Analysis of models' plausibility is presented here.
+
+## I. Overall grade
+
+In our hypothesis testing of alcohol consumption and grades, we only consider the final grade as we think it is the most important grade. However, we may need a general view of grades in the whole process as well. So in this additional test, we consider a new variable which is the average grades of all three-period grades `G1`, `G2`, `G3`. In our exploratory analysis, we have mentioned the test statistics of student's proportions with three period score below 10 for each Workday alcohol consumption groups. For **average grade**, the proportion of students with mean grades lower than 10 increase when workday alcoholic consumption increase (from `r round(weak_1, 3)` to `r round(weak_5, 3)`). 
+
+Table: Proportion of weak students by workday alcohol consumption (average grade)
+
+Workday alcohol consumption | 1 | 2 | 3 | 4 | 5
+------ | -- | -- | -- | -- | --
+Proportion of weak students| `r round(weak_1, 3)` | `r round(weak_2, 3)` | `r round(weak_3, 3)` | `r round(weak_4, 3)` | `r round(weak_5, 3)`
+
+```{r visual-1-1,fig.height=5, fig.width=10, fig.align="center", out.width="80%"}
+# visualization between alcohol consumption and grading scale.
+# This is a visualization for proportion of student grade status and alcoholic
+# consumption status. gall, g1, g2, g3 considered respectively for overall
+# grade and first, second, thirs period grades.
+
+#overall grade
+gall <- ggplot(alcohol, aes(Dalc))+
+  geom_bar(aes(fill = cutoff_all), position = "fill")+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "C")+
+  labs(title = "Alcoholic consumption vs Overall Grade",
+       y = "proportion",
+       x = "Workday alcohol consumption",
+       fill = "Grading")
+
+#first period grade
+g1 <- ggplot(alcohol, aes(Dalc))+
+  geom_bar(aes(fill = cutoff_G1), position = "fill")+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "C")+
+  labs(title = "1st period grade",
+       y = "Proportion",
+       color = "1st period grade")+
+  scale_fill_discrete(guide=FALSE)
+  
+#second period grade
+g2 <- ggplot(alcohol, aes(Dalc))+
+  geom_bar(aes(fill = cutoff_G2), position = "fill")+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "C")+
+  labs(title = "2nd period grade",
+       y = "",
+       color = "Grading scale")+
+  scale_fill_discrete(guide=FALSE)
+  
+#Final grade
+g3 <- ggplot(alcohol, aes(Dalc))+
+  geom_bar(aes(fill = cutoff_G3), position = "fill")+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "D")+
+  labs(title = "Final Grade",
+       y = "",
+       fill = "Grading")
+
+#display graphs
+(g1+g2+g3)
+```
+
+For all grades, we split the students into 4 groups by their grades (good: grade $\geq 16$, acceptable: $11\leq$ grade $\leq 15$, weak: $6\leq$ grade $\leq 10$, and very weak: grade $\leq 5$). From the first graph, higher workday alcohol consumption associates with a higher proportion of weak and very weak students.
+
+**Hypothesis test:** Now we will perform a hypothesis test to check if alcohol consumption negatively affects the average grades. Our significant level will be 0.05.
+
+```{r append-box-plot-2,fig.align="center", out.width= "70%"}
+# visualization for grades in different boxplots, for each alcohol consumption
+# level.
+gD <- ggplot(alcohol, aes(x=Dalc, y=mean_score, group=Dalc)) +
+  geom_boxplot(aes(color = as.factor(Dalc)))+
+  labs(x = "Workday alcohol consumption",
+       y = "Average grade",
+       title = "Dalc vs Average grades",
+       color = "Consumption level")+
+  stat_summary(fun = mean,
+               geom = "point",
+               size = 2.5)+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "C", guide = F)
+
+gW <- ggplot(alcohol, aes(x=Walc, y=mean_score, group=Walc)) +
+  geom_boxplot(aes(color = as.factor(Walc)))+
+  labs(x = "Weekend alcohol consumption",
+       y = "",
+       title = "Walc vs Average grades",
+       color = "Consumption level")+
+  stat_summary(fun = mean,
+               geom = "point",
+               size = 2.5)+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "C", guide = F)
+
+gD + gW
+```
+
+When considered by average grades, we can see that higher alcohol consumption associates with lower mean and median average grades among each consumption group. The declining grade trend is more clear when considered by the weekend.
+
+```{r append-hyp-test-1}
+#hypothesis testing for correlation between alcoholic consumption
+null_dist_D_avg <- alcohol %>%
+  specify(Dalc ~ mean_score) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+```
+
+```{r append-hyp-test-2}
+#hypothesis testing for correlation between alcoholic consumption
+null_dist_W_avg <- alcohol %>%
+  specify(Walc ~ mean_score) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = rep, type = "permute") %>%
+  calculate(stat = "correlation")
+```
+
+```{r append-obs-stat-1, message = FALSE, warning = FALSE, echo = FALSE}
+cor_dalc_avg <- alcohol %>%
+  specify(Dalc ~ G3) %>%
+  calculate(stat = "correlation")
+
+cor_walc_avg <- alcohol %>%
+  specify(Walc ~ G3) %>%
+  calculate(stat = "correlation")
+```
+
+```{r append-p-value-1}
+p_val_avg_grade <- null_dist_D_avg %>%
+  get_p_value(obs_stat = cor_dalc_avg, direction = "less") %>%
+  pull()
+```
+
+```{r append-p-value-2}
+p_val_avg_grade_W <- null_dist_W_avg %>%
+  get_p_value(obs_stat = cor_walc_avg, direction = "less") %>%
+  pull()
+```
+
+When performing simulation-based hypothesis testing to assert whether there is a negative correlation between alcohol consumption and average grade, the p-values for both Workday and Weekend consumption hypothesis tests are again extremely small that can't be detected among the null distributions. So we conclude that there is a negative correlation between Workday alcohol consumption and student's average grade.
+
+## II. Good students vs bad students
+
+```{r condition, message = FALSE, warning = FALSE, echo = FALSE}
+# Note from Nathan: So I would define two control groups of students is the 
+# group that has "good condition", such as parents living together, having 
+# family educational support, internet access, and famrel: family quality of 
+# relationship, and the other groups will be student that lacking one of these. 
+# If you guys have any ideas how we should change the way to control variables, 
+# just feel free to change (and I'll help to change it of course). 
+# You can change in here:
+
+alcohol <- alcohol %>%
+  mutate(condition = case_when(
+    Pstatus == "T"& 
+         famsup == "yes"&
+         internet == "yes"&
+         famrel >= 4 ~ "good",
+    TRUE ~ "bad"
+  ))
+
+#So far, I don't consider any things related to gender and school of the students.
+```
+
+This is a new attempt to control more variables to give a more general conclusion about alcohol consumption and study performance. We think that students with hard conditions (identified by the variables), may find it harder to perform well in their education. Therefore, we split the students into two groups. Based on their living status, we define them as having *good* condition or *bad* condition. The *good* conditioned student have their parent living together (`Pstatus = T`), have family educational support (`famsup = "yes"`), have internet access (`internet = "yes"`) and quality of family relationship is good (`famrel > 3`). The *bad* conditioned student lack at least one of these properties.
+
+```{r append-visual-2, message = FALSE, warning = FALSE, echo = FALSE}
+mean_good <- alcohol %>%
+  filter(condition == "good") %>%
+  specify(response = mean_score) %>%
+  calculate(stat = "mean") %>%
+  pull()
+
+mean_bad <- alcohol %>%
+  filter(condition == "bad") %>%
+  specify(response = mean_score) %>%
+  calculate(stat = "mean") %>%
+  pull()
+```
+
+```{r append-visualization-3, fig.align="center", out.width = "70%"}
+ggplot(alcohol, aes(x=Dalc, y=mean_score, group=Dalc)) +
+  geom_boxplot(aes(color = as.factor(Dalc)))+
+  labs(x = "Workday alcohol consumption",
+       y = "Average grade",
+       title = "Workday alcoholic consumption vs Average grades",
+       color = "Dalc",
+       subtitle = "Faceted by student's condition")+
+  facet_wrap(~condition)+
+  stat_summary(fun = mean,
+               geom = "point",
+               size = 2.5)+
+  theme_light()+
+  scale_color_viridis(discrete = TRUE, option = "C")
+```
+
+When dividing students into two groups of good and bad conditions, we see that good students have a clear decreasing average grade when Workday alcohol consumption increases. Generally, in both conditions, lower grades are associated with higher Workday alcohol consumption. 
+
+### 1. Conditions vs Grades
+
+We consider the hypothesis that good-conditioned students may have higher mean average score compared to bad-conditioned students. 
+
+```{r hyp-test-append, message = FALSE, warning = FALSE, echo = FALSE}
+CLT_grade <- alcohol %>%
+  t_test(mean_score ~ condition,
+         mu = 0,
+         alternative = "greater",
+         conf_int = FALSE,
+         order = c("good", "bad"))
+
+CLT_grade %>%
+  kable()
+```
+
+When controlling the condition of the student, we can see that the negative trends in grades of both groups, and in the group with good condition, the grades are generally higher, but not too much higher. CLT-based testing gives a t-distribution of `r round(CLT_grade$t_df, 3)` degree of freedom, and the p-value of `r round(CLT_grade$p_value,4)`, when considering the hypothesis that the average grade of good-conditioned students is higher than bad-conditioned students'. We don't have sufficient evidence to show that this is true, since the p-value is high.
+
+### 2. Conditions vs Grades and Alcohol consumption
+
+Now we will consider the conditions and grades with more predictors from alcohol consumption. 
+
+```{r append-con-avg-alc}
+m_con_al <- lm(mean_score ~ condition + Dalc + Walc + Dalc*Walc, data = alcohol)
+tidy(m_con_al) %>%
+  kable()
+```
+We obtain the model $$\text{Average Grade} = 12.945 + 0.301 \text{conditiongood} - 0.734 \text{Dalc} - 0.263 \text{Walc} + 0.067 \text{Dalc} \times \text{Walc}$$
+which suggest that we expect from the data, student with better condition, holding other constant, will have in average $0.301$ more point than bad-conditioned students. Holding other constant, we can expect that higher alcohol consumption will result in lower average score (with coefficients $-0.734$ and $-0.263$ for Dalc and Walc respectively). It is suggested from the data that students with better condition and lower alcohol consumption will perform better than students with bad condition and higher alcohol consumption.
+
+```{r append-glance-1}
+append_1 <- glance(m_con_al)
+```
+
+Now we test the conditions for our linear models. The $R^2$ and adjusted $R^2$ for this model is `r round(append_1$r.squared, 4)` and `r round(append_1$adj.r.squared, 4)`. 
+
+```{r append-augment-1}
+test_append_1 <- augment(m_con_al)
+```
+
+```{r append-augment-1-check}
+
+cond1_append_1 <- ggplot(data = test_append_1, aes(y = .resid, x = .fitted))+
+  geom_point(alpha = 0.3)+
+  labs(y = "Residuals", x = "Fitted")+
+  theme_light()
+
+cond2_append_1 <-ggplot(test_append_1, aes(x = 1:nrow(test_append_1), y = .resid))+
+  geom_point(alpha = 0.3)+
+  labs(x = "Index", y = "Residuals")+
+  theme_light()
+
+cond3_append_1 <-ggplot(test_append_1, aes(x = .resid))+
+  geom_histogram()+
+  labs(x = "Residuals")+
+  theme_light()
+```
+
+```{r sppend-check-1, fig.height = 2, fig.width = 6, echo = F, fig.align="center"}
+cond1_append_1+cond2_append_1+cond3_append_1
+```
+We can see that the model fits the linearity, equal variance, normality, and independence conditions. 
+
+## III. Assessing linear models fit
+
+We have used some linear models throughout four main hypothesis tests. We will provide more context for these models' conditions and also analyze some more models. Also, we have seen that in Appendix II.2, when considered by condition, the models work really well. We will test by student's condition to see whether the conditions of the model are more sufficient.
+
+### 1. Linear model in the first hypothesis test
+
+**Weekend alcohol consumption vs Final Grade:**
+
+The r-squared value for this relationship is `r round(r.sqd.g3.walc,3)` and the adjusted r-squared value is `r round(adjr.g3.walc,3)`. Therefore, although some of these relationships are significant, weekend alcohol consumption alone doesn't account for much of the variability seen in final grades. 
+
+```{r aug-g1-walc-check}
+aug_g3_walc <- augment(uni_walc_g3)
+
+cond1_g3_walc <- ggplot(data = aug_g3_walc, aes(y = .resid, x = .fitted))+
+  geom_point(alpha = 0.3)+
+  labs(y = "Residuals", x = "Fitted")+
+  theme_light()
+
+cond2_g3_walc <-ggplot(aug_g3_walc, aes(x = 1:nrow(aug_g3_walc), y = .resid))+
+  geom_point(alpha = 0.3)+
+  labs(x = "Index", y = "Residuals")+
+  theme_light()
+
+cond3_g3_walc <-ggplot(aug_g3_walc, aes(x = .resid))+
+  geom_histogram()+
+  labs(x = "Residuals")+
+  theme_light()
+```
+
+```{r cond_g3_walc_show, fig.height = 2, fig.width = 6, echo = F, fig.align="center"}
+cond1_g3_walc+cond2_g3_walc+cond3_g3_walc
+```
+
+The equal variance, independence, and normality condition for using a linear model appear to be checked. The linearity condition, on the other hand, is not met. Therefore, the validity of these results is a little rocky. 
+
+**Workday alcohol consumption vs Final Grade:**
+
+The r-squared value for this relationship is `r round(r.sqd.g3.dalc,3)` and the adjusted r-squared value is `r round(adjr.g3.dalc,3)`. Therefore, daily alcohol consumption still doesn't account for much of the variability seen in final grades, even though the relationships are significant.
+
+```{r aug-g1-dalc-check, echo = FALSE}
+aug_g3_dalc <- augment(uni_dalc_g3)
+
+cond1_g3_dalc <- ggplot(data = aug_g3_dalc, aes(y = .resid, x = .fitted))+
+  geom_point(alpha = 0.3)+
+  labs(y = "Residuals", x = "Fitted")+
+  theme_light()
+
+cond2_g3_dalc <- ggplot(aug_g3_dalc, aes(x = 1:nrow(aug_g3_dalc), y = .resid))+
+  geom_point(alpha = 0.3)+
+  labs(x = "Index", y = "Residuals")+
+  theme_light()
+
+cond3_g3_dalc <- ggplot(aug_g3_dalc, aes(x = .resid))+
+  geom_histogram()+
+  labs(x = "Residuals")+
+  theme_light()
+
+```
+
+```{r cond_g3_dalc_show, fig.height = 2, fig.width = 6, echo = F, fig.align="center"}
+cond1_g3_dalc+cond2_g3_dalc+cond3_g3_dalc
+```
+
+The linear model conditions for this model matched the conditions of the previous model. Therefore, the validity of this test is also rocky considering the failure to meet the linearity requirements. 
+
+### 2. Insufficient model in the second hypothesis testing
+
+We've presented this model in the hypothesis 2: $$\text{Study time} = 2.246 - 0.003 \text{Dalc} - 0.134 \text{Walc} - 0.001 \text{Dalc} \times \text{Walc}.$$
+However, we mentioned that the conditions of this model is not sufficiently met. This is our testing for the model.
+
+```{r append-lin-model-studytime, message = FALSE, warning = FALSE, echo = FALSE}
+# This linear model considers the effects of Dalc and Walc on failures
+m_stdy_dai_week_1 <- lm(studytime ~ Dalc + Walc + Dalc*Walc, data = alcohol)
+test_append_2 <- augment(m_stdy_dai_week_1)
+
+cond1_append_2 <- ggplot(data = test_append_2, aes(y = .resid, x = .fitted))+
+  geom_point(alpha = 0.3)+
+  labs(y = "Residuals", x = "Fitted")+
+  theme_light()
+
+cond2_append_2 <-ggplot(test_append_2, aes(x = 1:nrow(test_append_2), y = .resid))+
+  geom_point(alpha = 0.3)+
+  labs(x = "Index", y = "Residuals")+
+  theme_light()
+
+cond3_append_2 <-ggplot(test_append_2, aes(x = .resid))+
+  geom_histogram()+
+  labs(x = "Residuals")+
+  theme_light()
+```
+
+```{r append-check-2, fig.height = 2, fig.width = 6, echo = F, fig.align="center"}
+cond1_append_2+cond2_append_2+cond3_append_2
+```
+The linearity, independence, normality conditions are not really sufficient in this model. Also, equal variance condition is also questionable.
+
+### 3. Linear model in third hypothesis test
+
+We said that in the third hypothesis, we obtain a linear model predicting numbers of absences with predictors Workday and Weekend alcohol consumption, and get positive slopes of both Workday (`r round(slope_Dalc,3)`) and Weekend (`r round(slope_Walc, 3)`) consumption. 
+
+```{r append-linear-modeal-absences, message = FALSE, warning = FALSE, echo = FALSE}
+m_abs_score_3 <- lm(absences ~ Dalc + Walc + Dalc/Walc, data = alcohol)
+
+test_append_3 <- augment(m_abs_score_3)
+
+cond1_append_3 <- ggplot(data = test_append_3, aes(y = .resid, x = .fitted))+
+  geom_point(alpha = 0.3)+
+  labs(y = "Residuals", x = "Fitted")+
+  theme_light()
+
+cond2_append_3 <-ggplot(test_append_3, aes(x = 1:nrow(test_append_3), y = .resid))+
+  geom_point(alpha = 0.3)+
+  labs(x = "Index", y = "Residuals")+
+  theme_light()
+
+cond3_append_3 <-ggplot(test_append_3, aes(x = .resid))+
+  geom_histogram()+
+  labs(x = "Residuals")+
+  theme_light()
+```
+
+```{r append-check-3, fig.height = 2, fig.width = 6, echo = F, fig.align="center"}
+cond1_append_3+cond2_append_3+cond3_append_3
+```
+The conditions for this model is more sufficiently met than the previous one. Linearity, independence, and normality are sufficiently met. However, the equal variance condition is questionable.
+
+### 4. Insufficient model in the fourth hypothesis testing
+
+We've presented this model in the fourth analysis: $$\text{Study time} = 0.0538 + 0.1 \text{Dalc} + 0.0286 \text{Walc} - 0.0114 \text{Dalc} \times \text{Walc}.$$
+However, we mentioned that the conditions of this model is not sufficiently met. These are our testing for the models. 
+
+```{r append-lin-model-failure, message = FALSE, warning = FALSE, echo = FALSE}
+# This linear model considers the effects of Dalc and Walc on failures
+m_fail_dai_week_1 <- lm(failures ~ Dalc + Walc + Dalc*Walc, data = alcohol)
+test_append_4 <- augment(m_fail_dai_week_1)
+
+cond1_append_4 <- ggplot(data = test_append_4, aes(y = .resid, x = .fitted))+
+  geom_point(alpha = 0.3)+
+  labs(y = "Residuals", x = "Fitted")+
+  theme_light()
+
+cond2_append_4 <-ggplot(test_append_4, aes(x = 1:nrow(test_append_4), y = .resid))+
+  geom_point(alpha = 0.3)+
+  labs(x = "Index", y = "Residuals")+
+  theme_light()
+
+cond3_append_4 <-ggplot(test_append_4, aes(x = .resid))+
+  geom_histogram()+
+  labs(x = "Residuals")+
+  theme_light()
+```
+
+```{r append-check-4, fig.height = 2, fig.width = 6, echo = F, fig.align="center"}
+cond1_append_4+cond2_append_4+cond3_append_4
+```
+The linearity, independence, normality conditions are not really sufficient in this model. Also, equal variance condition is also questionable.
+
+## IV. Simulation-based testing information
+
+We have shown that we used various simulation-based tests when testing the relationship between alcohol consumption and study performance. This part will explicitly display the null distribution and our calculated statistics. 
+
+### 1. First hypothesis
+
+**Correlation between workday alcohol consumption and final grade**
+
+- **Test statistic:** `r round(cor_dalc_final, 3)`.
+- **p-value**: `r p_val_grade`.
+
+
+```{r hyp-1-plot, fig.align="center", out.width="70%"}
+ggplot(null_dist_D, aes(stat)) +
+  geom_histogram(color = "darkblue", fill = "lightblue") + 
+  labs(x = "Correlation between Dalc and G",
+       title = "Null distribution for correlation between Dalc and G3") +
+  geom_vline(xintercept = cor_dalc_final$stat, color = "red", lwd = 1) +
+  theme_light()
+```
+**Correlation between weekend alcohol consumption and final grade**
+
+- **Test statistic:** `r round(cor_walc_final, 3)`.
+- **p-value**: `r p_val_grade_W`.
+
+```{r hyp-2-plot, fig.align="center", out.width="70%"}
+ggplot(null_dist_W, aes(stat)) +
+  geom_histogram(color = "darkblue", fill = "lightblue") + 
+  labs(x = "Correlation between Walc and G3",
+       title = "Null distribution for correlation between Walc and G3") +
+  geom_vline(xintercept = cor_walc_final$stat, color = "red", lwd = 1) +
+  theme_light()
+```
+
+### 2. Second hypothesis
+
+**Correlation between workday alcohol consumption and weekly study time:**
+
+- **Test statistic:** `r round(cor_stdy_dai, 3)`.
+- **p-value**: `r p_val_dai`.
+
+```{r hyp-3-plot, fig.align="center", out.width="70%"}
+ggplot(null_dist_stdy_dai, aes(stat)) +
+  geom_histogram(color = "darkblue", fill = "lightblue") + 
+  labs(x = "Correlation between Dalc and studytime",
+       title = "Null distribution for correlation between Dalc and weekly study times") +
+  geom_vline(xintercept = cor_stdy_dai, color = "red", lwd = 1) +
+  theme_light()
+```
+
+**Correlation between weeken alcohol consumption and weekly study time:**
+
+- **Test statistic:** `r round(cor_stdy_week, 3)`.
+- **p-value**: `r p_val_week`.
+
+```{r hyp-4-plot, fig.align="center", out.width="70%"}
+ggplot(null_dist_stdy_week, aes(stat)) +
+  geom_histogram(color = "darkblue", fill = "lightblue") + 
+  labs(x = "Correlation between Walc and studytime",
+       title = "Null distribution for correlation between Walc and weekly study times") +
+  geom_vline(xintercept = cor_stdy_week, color = "red", lwd = 1) +
+  theme_light()
+```
+
+### 3. Third hypothesis test
+
+**Correlation between workday study time and absences (before controlled)**
+
+- **Test statistic:** `r round(obs_abs_dalc, 3)`.
+- **p-value**: `r p_val_abs_dalc`.
+
+```{r hyp-5-plot, fig.align="center", out.width="70%"}
+ggplot(null_absence_dalc, aes(stat)) +
+  geom_histogram(color = "darkblue", fill = "lightblue") + 
+  labs(x = "Correlation between Dalc and Absences",
+       title = "Null distribution for correlation between Dalc and Absences") +
+  geom_vline(xintercept = obs_abs_dalc$stat, color = "red", lwd = 1) +
+  theme_light()
+```
+
+
+**Correlation between weekend study time and absences (before controlled)**
+
+- **Test statistic:** `r round(obs_abs_walc, 3)`.
+- **p-value**: `r p_val_abs_walc`.
+
+```{r hyp-6-plot, fig.align="center", out.width="70%"}
+ggplot(null_absence_walc, aes(stat)) +
+  geom_histogram(color = "darkblue", fill = "lightblue") + 
+  labs(x = "Correlation between Walc and Absences",
+       title = "Null distribution for correlation between Walc and Absences") +
+  geom_vline(xintercept = obs_abs_walc$stat, color = "red", lwd = 1) +
+  theme_light()
+```
+
+
+**Correlation between workday study time and absences (after controlled)**
+
+- **Test statistic:** `r round(obs_abs_dalc_2, 3)`.
+- **p-value**: `r p_val_1`.
+
+```{r hyp-7-plot, fig.align="center", out.width="70%"}
+ggplot(null_absence_dalc_2, aes(stat)) +
+  geom_histogram(color = "darkblue", fill = "lightblue") + 
+  labs(x = "Correlation between Dalc and Absences",
+       title = "Null distribution for correlation between Dalc and Absences") +
+  geom_vline(xintercept = obs_abs_dalc_2$stat, color = "red", lwd = 1) +
+  theme_light()
+```
+
+- **Test statistic:** `r round(obs_abs_walc_2, 3)`.
+- **p-value**: `r p_val_2`.
+
+```{r hyp-8-plot, fig.align="center", out.width="70%"}
+ggplot(null_absence_walc_2, aes(stat)) +
+  geom_histogram(color = "darkblue", fill = "lightblue") + 
+  labs(x = "Correlation between Walc and Absences",
+       title = "Null distribution for correlation between Walc and Absences") +
+  geom_vline(xintercept = obs_abs_walc_2$stat, color = "red", lwd = 1) +
+  theme_light()
+```
+
+### 4. Fourth hypothesis
+
+**Correlation between workday alcohol consumption and number of failed classes**
+
+- **Test statistic:** `r round(cor_fail_dai, 3)`.
+- **p-value**: `r p_val_dai_fail`.
+
+```{r hyp-9-plot, fig.align="center", out.width="70%"}
+ggplot(null_dist_fail_dai, aes(stat)) +
+  geom_histogram(color = "darkblue", fill = "lightblue") + 
+  labs(x = "Correlation between Dalc and number of failed classes",
+       title = "Null distribution for correlation between Dalc and Failure") +
+  geom_vline(xintercept = cor_fail_dai, color = "red", lwd = 1) +
+  theme_light()
+```
+
+**Correlation between weekend alcohol consumption and number of failed classes**
+
+- **Test statistic:** `r round(cor_fail_week, 3)`.
+- **p-value**: `r p_val_week_fail`.
+
+```{r hyp-10-plot, fig.align="center", out.width="70%"}
+ggplot(null_dist_fail_week, aes(stat)) +
+  geom_histogram(color = "darkblue", fill = "lightblue") + 
+  labs(x = "Correlation between Walc and number of failed classes",
+       title = "Null distribution for correlation between Walc and Failure") +
+  geom_vline(xintercept = cor_fail_week, color = "red", lwd = 1) +
+  theme_light()
+```

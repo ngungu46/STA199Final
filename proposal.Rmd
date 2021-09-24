@@ -1,0 +1,86 @@
+---
+title: "Project proposal"
+author: "Fat Goldfish: Daniel Bolja, Elyse McFalls, Damla Ozdemir, Nathan Nguyen"
+date: "October 9th, 2020"
+output: pdf_document
+---
+
+### Section 1. Introduction
+
+There has been a recent study that looked at changes in the drinking habits of Americans, which finds that “Americans Are Drinking 14% More Often During Pandemic”[^1], and “Instances of heavy drinking among women, which for women was defined as four or more drinks within a couple of hours, spiked by 41%”[^2]. Although these studies did not look at younger adults, we found this conclusion interesting, so we want to analyze data having something to do with alcohol consumption in a younger population. We want to investigate the relationship between alcohol consumption in younger age groups and its effects on academic performance. We referenced a study using various types of data to try and predict secondary school performance of Portugese students, with weekend and workday alcohol consumption being two important variables to consider. We want to determine if alcohol consumption is a significant predictor of academic success. Based on the variables of the dataset, we hypothesize that:
+
+- Alcohol consumption will significantly predict first period/ second period/ final grades (depending on what grades we want to look at) after controlling for other variables. There will be a negative relationship between grades and alcohol consumption.
+- Alcohol consumption will significantly predict weekly study times after controlling for other variables. There will be a negative relationship between weekly study times and alcohol consumption.
+- Alcohol consumption will significantly predict absences after controlling for other variables. There will be a positive relationship between absences and alcohol consumption.
+- Alcohol consumption will significantly predict the number of failed classes after controlling for other variables. There will be a positive relationship between the number of failed classes and alcohol consumption.
+
+[^1]: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7369979/
+[^2]: https://www.npr.org/2020/10/05/920437811/americans-are-drinking-14-more-often-during-pandemic-study-finds
+
+### Section 2. Data description
+
+We are using the data from the study of Cortez and Silva (2008), which focused on the study performance of secondary students based on their alcohol consumption. The data contains 649 observations which are secondary students enrolled in Portuguese languages from two public schools in Alenjeto region of Portugal during the 2005 - 2006 school year. Since at this time, the majority of Portuguese public schools’ information systems remained very poor, the authors built the database from two sources: paper-based school reports with few attributes from grades and number of absences, and questionnaires about several demographic, social/emotional and school related variables that were expected to affect student performance. Data with lack of identification details was discarded. 
+
+The details of variables are shown below, with four last attributes taken from school reports.
+
+
+Variables | Meaning
+---- | -----------------------------
+`school` | student's school ('GP' - Gabriel Pereira or 'MS' - Mousinho da Silveira)
+`sex` | student's sex ('F' - female or 'M' - male)
+`age` | student's age (from 15 to 22)
+`address` | student's home address type ('U' - urban or 'R' - rural)
+`famsize` | family size ('LE3' - less or equal to 3 or 'GT3' - greater than 3)
+`Pstatus` | parent's cohabitation status ('T' - living together or 'A' - apart)
+`Medu` | mother's education (0 to 4)
+`Fedu` | father's education (0 to 4)
+`Mjob` | mother's job ('teacher', 'health' care related, civil 'services' , 'at_home' or 'other')
+`Fjob` | father's job ('teacher', 'health' care related, civil 'services' , 'at_home' or 'other')
+`reason` | reason to choose this school (close to 'home', school 'reputation', 'course' preference or 'other')
+`guardian` | student's guardian ('mother', 'father' or 'other')
+`traveltime` | home to school travel time ($1 - 10$ hours)
+`studytime` | weekly study time ($1 - 10$ hours)
+`failures` | number of past class failures ($n$ if $0\leq n<3$, else $4$)
+`schoolsup` | extra educational support 
+`famsup` | family educational support 
+`paid` | extra paid classes within the course subject
+`activities` | extra-curricular activities 
+`nursery` | attended nursery school
+`higher` | wants to take higher education
+`internet` | Internet access at home
+`romantic` | with a romantic relationship
+`famrel` | quality of family relationships 
+`freetime` | free time after school
+`goout` | going out with friends
+`Dalc` | workday alcohol consumption
+`Walc` | weekend alcohol consumption 
+`health` | current health status
+`absences` | number of school absences (from $0$ to $93$)
+`G1` | first period grade
+`G2` | second period grade
+`G3` | final grade
+
+
+**Note**: Mother and father education (`Medu` and `Fedu`) were valued from 0 to 4 with: 0 - none, 1 - primary education (4th grade), 2 – 5th to 9th grade, 3 – secondary education or 4 – higher education. For `famrel`, `freetime`, `goout`, `Dalc`, `Walc` and `health` variables, the values were taken from 1 (very low/bad) to 5 (very high/excellent). Variables `schoolsup`, `famsup`, `paid`, `activities`, `nursery`, `higher`, `internet`, and `romantic` variables are measured with yes or no. Grades variables were taken from 0 to 20.
+
+
+### Section 3. Glimpse of data 
+
+```{r load-package, message = FALSE, echo = F}
+library(tidyverse)
+```
+
+```{r load-data}
+alcohol <- read.csv("data/student-por.csv")
+```
+
+```{r glimpse-data}
+glimpse(alcohol)
+```
+
+
+### Bibliography
+
+1. P. Cortez and A. Silva. Using data mining to pre-dict secondary school student performance. 2008.
+
+2. Student Alcohol Consumption dataset: https://www.kaggle.com/uciml/student-alcohol-consumption

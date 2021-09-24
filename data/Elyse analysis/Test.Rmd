@@ -1,0 +1,291 @@
+---
+title: "Test"
+output: pdf_document
+---
+
+
+## Load libraries and Data
+
+```{r libraries}
+library(tidyverse)
+library(infer)
+library(broom)
+library(MASS)
+```
+
+
+```{r alcohol}
+alcohol <- read.csv("data/student-por.csv")
+```
+
+```{r walc_fct}
+alcohol <- alcohol%>%
+  mutate(Walc_fct = case_when(Walc == 1 ~ "very low",
+                              Walc == 2 ~ "2",
+                              Walc == 3 ~ "3",
+                              Walc == 4 ~ "4",
+                              Walc == 5 ~ "very high"),
+         Walc_fct_num = as.factor(Walc),
+         studytime_fct = as.factor(studytime),
+         fail_fct = as.factor(failures))
+```
+
+## Preliminary
+
+```{r walc-dist}
+ggplot(data = alcohol, mapping = aes(x = Walc))+
+  geom_histogram(binwidth = 1)+
+  labs(title = "Distribution of Weekend Alcohol Consumption from Portugese High 
+       Schoolers in 2005-2006", subtitle = "1 = very low, 5 = very high", x = 
+         "Weekend Alcohol Consumption Rating", caption = "Data adapted from 
+       the study of Cortez and Silva (2008)")
+
+```
+
+```{r dalc-dist}
+ggplot(data = alcohol, mapping = aes(x = Dalc))+
+  geom_histogram(binwidth = 1)+
+  labs(title = "Distribution of Daily Alcohol Consumption from Portugese High 
+       Schoolers in 2005-2006", subtitle = "1 = very low, 5 = very high", x = 
+         "Daily Alcohol Consumption Rating", caption = "Data adapted from 
+       the study of Cortez and Silva (2008)")
+```
+
+```{r studytime-dist}
+ggplot(data = alcohol, mapping = aes(x = studytime))+
+  geom_histogram(binwidth = 1)+
+  labs(title = "Distribution of Study Time (hrs) from Portugese High Schoolers 
+  in 2005-2006", x = "Study Time (hrs)", caption = "Data adapted from the 
+  study of Cortez and Silva (2008)")
+```
+
+```{r absences-dist}
+ggplot(data = alcohol, mapping = aes(x = absences))+
+  geom_histogram(binwidth = 1)+
+  labs(title = "Distribution of Absences from Portugese High Schoolers 
+  in 2005-2006", x = "Number of Absences", caption = "Data adapted from the 
+  study of Cortez and Silva (2008)")
+```
+
+```{r fails-dist}
+ggplot(data = alcohol, mapping = aes(x = failures))+
+  geom_histogram(binwidth = 1)+
+  labs(title = "Distribution of Failed Classes from Portugese High Schoolers 
+  in 2005-2006", x = "Number of Failed Classes", caption = "Data adapted from the 
+  study of Cortez and Silva (2008)")
+```
+
+## WALC & G1
+- Alcohol consumption will significantly predict first period/ second period/ final grades (depending on what grades we want to look at) after controlling for other variables. There will be a negative relationship between grades and alcohol consumption.
+
+```{r G1-walc-boxplot}
+ggplot(data = alcohol, mapping = aes(x = reorder(Walc_fct, Walc, na.rm = TRUE), y = G1))+
+  geom_boxplot()+
+  coord_flip()+
+  labs(x = "Weekend Alcohol Consumption", y = "First Period Grade", title = "The Relationship between First Period Grades and Weekend Alcohol Consumption", subtitle = "From Portugese High Schoolers during 2005-2006", caption = "Data adapted from from the study of Cortez and Silva (2008)")
+```
+
+
+```{r uni-walc-g1}
+uni_walc_g1 <- lm(G1 ~ Walc_fct_num, data = alcohol)
+tidy(uni_walc_g1)
+glance(uni_walc_g1)
+```
+*WALC 1(0) & WALC 2(1)*
+$\widehat{G1} = 11.688 + 0.058Walc$
+
+*WALC 1(0) & WALC 3(1)*
+$\widehat{G1} = 11.688 - 0.380Walc$
+
+*WALC 1(0) & WALC 4(1)*
+$\widehat{G1} = 11.688 - 1.033Walc$
+
+*WALC 1(0) & WALC 5(1)*
+$\widehat{G1} = 11.688 - 1.355Walc$ **- Is this what we care about the most or do we include all of them?**
+
+**When weekend alcohol consumption is very high, a student's first period grades are expected to decrease by 1.355 points on average as opposed to if their weekend alcohol consumption was very low.**
+
+```{r full-g1}
+full.g1 <- lm(G1 ~., data = alcohol) 
+tidy(full.g1) #fix na values but I don't think Walc_fct_num will end up being significant amongst other predictors anyways. 
+```
+
+
+```{r aug-g1-walc-check}
+aug_g1_walc <- augment(uni_walc_g1)
+ggplot(data = aug_g1_walc, aes(y = .resid, x = .fitted))+
+  geom_point()
+ggplot(aug_g1_walc, aes(x = 1:nrow(aug_g1_walc), y = .resid))+
+  geom_point()
+ggplot(aug_g1_walc, aes(x = .resid))+
+  geom_histogram()
+```
+**The equal variance, independence, and normality condition for using a linear model appear to be checked. The linearity condition, on the other hand, is sus(?).**
+
+## WALC & G3
+
+```{r G3-boxplot}
+ggplot(data = alcohol, mapping = aes(x = reorder(Walc_fct, Walc, na.rm = TRUE), y = G3))+
+  geom_boxplot()+
+  coord_flip()+
+  labs(x = "Weekend Alcohol Consumption", y = "Final Grade", title = "The Relationship between Final Grades and Weekend Alcohol Consumption", subtitle = "From Portugese High Schoolers during 2005-2006", caption = "Data adapted from from the study of Cortez and Silva (2008)")
+```
+
+```{r uni-walc-g3}
+uni_walc_g3 <- lm(G3 ~ Walc_fct_num, data = alcohol)
+tidy(uni_walc_g3)
+glance(uni_walc_g3)
+```
+*WALC 1(0) & WALC 2(1)*
+$\widehat{G1} = 12.36 - 0.100Walc$
+
+*WALC 1(0) & WALC 3(1)*
+$\widehat{G1} = 12.36 - 0.693Walc$
+
+*WALC 1(0) & WALC 4(1)*
+$\widehat{G1} = 12.36 - 1.326Walc$
+
+*WALC 1(0) & WALC 5(1)*
+$\widehat{G1} = 12.36 - 1.805alc$ **- Is this what we care about the most or do we include all of them?**
+
+```{r full-g1}
+full.g3 <- lm(G3 ~., data = alcohol) 
+tidy(full.g3) #fix na values but I don't think Walc_fct_num will end up being significant amongst other predictors anyways. 
+```
+
+```{r aug-g1-walc-check}
+aug_g3_walc <- augment(uni_walc_g3)
+ggplot(data = aug_g3_walc, aes(y = .resid, x = .fitted))+
+  geom_point()
+ggplot(aug_g3_walc, aes(x = 1:nrow(aug_g3_walc), y = .resid))+
+  geom_point()
+ggplot(aug_g3_walc, aes(x = .resid))+
+  geom_histogram()
+```
+**The equal variance, independence, and normality condition for using a linear model appear to be checked. The linearity condition, on the other hand, is sus(?).**
+
+## WALC & Study Time
+
+- Alcohol consumption will significantly predict weekly study times after controlling for other variables. There will be a negative relationship between weekly study times and alcohol consumption.
+
+```{r study-walc-barplot}
+ggplot(data = alcohol, mapping = aes(x = reorder(Walc_fct, Walc, na.rm = TRUE), fill = studytime_fct))+
+  geom_bar(position = "fill")+
+  labs(x = "Weekend Alcohol Consumption", fill = "Study Time (hours)", title = "The Relationship between amount of Study Time and Weekend Alcohol Consumption", subtitle = "From Portugese High Schoolers during 2005-2006", caption = "Data adapted from study by Cortez and Silva (2008)")
+                                  
+```
+**Hypotest**
+
+Null: Weekend alcohol consumption and study time hours are independent of each other
+
+Alternative: Weekend alcohol consumption and study time hours are dependent of each other
+
+```{r chart-studytime-walc}
+alcohol%>%
+  group_by(reorder(Walc_fct, Walc, na.rm = TRUE))%>%
+  count(studytime_fct)%>%
+  pivot_wider(names_from = studytime_fct, values_from = n)
+```
+
+This chi-square test has 12 degrees of freedom.
+
+```{r chisq-test-walc-study}
+alcohol%>%
+  chisq_test(studytime_fct ~ Walc_fct)
+```
+
+```{r uni-stduytime-walc, include = FALSE}
+uni.study.walc <- lm(studytime ~ Walc, data = alcohol)
+tidy(uni.study.walc)
+```
+$\widehat{studytime} = 2.247 - 0.139Walc$
+
+**With every one unit increase and weekly alcohol consumption, a student's study time is expected to decrease by 0.1.39 on average. Weekend alcohol consumption is significantly, negatively related to study time when compared univariately.*
+
+
+```{r full-study-walc, include = FALSE}
+full.studytime <- lm(studytime ~., data = alcohol)
+tidy(full.studytime)%>%
+  slice(37)
+```
+
+**Weekend alcohol consumption is not significantly realted to students' first semester grades when compared against other predictors. Therefore, weekend alcohol consumption is likely not included in the stepwise model alongside other significant predictors. **
+
+
+
+## WALC & Absenteeism
+
+- Alcohol consumption will significantly predict absences after controlling for other variables. There will be a positive relationship between absences and alcohol consumption.
+
+
+```{r absent-walc-boxplot}
+ggplot(data = alcohol, mapping = aes(x = reorder(Walc_fct, Walc, na.rm = TRUE), y = absences))+
+  geom_boxplot()+
+  coord_flip()+
+  labs(x = "Weekend Alcohol Consumption", y = "Absences", title = "The Relationship between the number of Absences and Weekend Alcohol 
+       Consumption", subtitle = "From Portugese High Schoolers during 2005-2006", caption = "Data adapted from study by Cortez and Silva (2008)")
+```
+
+
+```{r uni-walc-abs}
+uni_walc_abs <- lm(absences ~ Walc_fct_num, data = alcohol)
+tidy(uni_walc_abs)
+glance(uni_walc_abs)
+```
+*WALC 1(0) & WALC 2(1)*
+$\widehat{Absences} = 2.891 + 0.796Walc$
+
+*WALC 1(0) & WALC 3(1)*
+$\widehat{Absences} = 2.891 + 1.0096Walc$
+
+*WALC 1(0) & WALC 4(1)*
+$\widehat{Absences} = 2.891 + 1.753Walc$
+
+*WALC 1(0) & WALC 5(1)*
+$\widehat{Absences} = 2.891 + 2.354Walc$ **- Is this what we care about the most or do we include all of them?**
+
+```{r full-g1}
+full.abs <- lm(absences ~., data = alcohol) 
+tidy(full.abs) #need to remove extra variables 
+```
+
+```{r aug-g1-walc-check}
+aug_abs_walc <- augment(uni_walc_abs)
+ggplot(data = aug_abs_walc, aes(y = .resid, x = .fitted))+
+  geom_point()
+ggplot(aug_abs_walc, aes(x = 1:nrow(aug_abs_walc), y = .resid))+
+  geom_point()
+ggplot(aug_abs_walc, aes(x = .resid))+
+  geom_histogram()
+```
+**The equal variance, independence, and normality condition for using a linear model appear to be checked. The linearity condition, on the other hand, is sus(?).**
+
+## WALC & Failed Classes
+
+- Alcohol consumption will significantly predict the number of failed classes after controlling for other variables. There will be a positive relationship between the number of failed classes and alcohol consumption.
+
+```{r walc-fail-barplot}
+ggplot(data = alcohol, mapping = aes(x = Walc_fct, fill = fail_fct))+
+  geom_bar(position = "fill")+
+  labs(x = "Weekend Alcohol Consumption", fill = "Number of Failed Classes", 
+       title = "The Relationship between the number of Failed Classes and 
+       Weekend Alcohol Consumption", subtitle = "From Portugese High Schoolers during 2005-2006", caption = "Data adapted from study by Cortez and Silva 
+       (2008)")
+```
+
+```{r walc-fail-table}
+alcohol%>%
+  filter(!is.na(fail_fct))%>%
+  group_by(reorder(Walc_fct, Walc, na.rm = TRUE))%>%
+  count(fail_fct)%>%
+  pivot_wider(names_from = fail_fct, values_from = n)%>%
+  mutate_all(~replace(., is.na(.), 0))
+```
+
+```{r chisq-test-walc-fails}
+alcohol%>%
+  chisq_test(fail_fct ~ Walc_fct)
+```
+
+
+
